@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-image = cv2.imread('./data/sample/bbox-example-image.jpg')
+
 
 # Define a function that takes an image, a list of bounding boxes, 
 # and optional color tuple and line thickness as inputs
@@ -17,9 +17,12 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
         pt1,pt2 = bbox
         cv2.rectangle(draw_img, pt1, pt2, color=color, thickness=thick)
     return draw_img # Change this line to return image copy with boxes
-# Add bounding boxes in this format, these are just example coordinates.
-bboxes = [((100, 100), (200, 200)), ((300, 300), (400, 600))]
 
-result = draw_boxes(image, bboxes)
-plt.imshow(result[...,::-1])
-plt.show()
+if __name__ == "__main__": 
+    image = cv2.imread('./data/sample/bbox-example-image.jpg')
+    # Add bounding boxes in this format, these are just example coordinates.
+    bboxes = [((100, 100), (200, 200)), ((300, 300), (400, 600))]
+    
+    result = draw_boxes(image, bboxes)
+    plt.imshow(result[...,::-1])
+    plt.show()
