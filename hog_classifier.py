@@ -31,14 +31,20 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
 
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
-def extract_features(imgs, cspace='RGB', orient=9, 
-                        pix_per_cell=8, cell_per_block=2, hog_channel=0):
+def extract_features(imgs, cspace='YCrCb', orient=9, 
+                        pix_per_cell=8, cell_per_block=2, hog_channel='ALL'):
     # Create a list to append feature vectors to
     features = []
     # Iterate through the list of images
     for file in imgs:
         # Read in each one by one
-        image = mpimg.imread(file)
+        if isinstance(file, str):
+            image = mpimg.imread(file)    
+        else:
+            image = file
+        
+        if image.max() < 2:
+            image = (image * 255).astype(np.uint8)
         # apply color conversion if other than 'RGB'
         if cspace != 'RGB':
             if cspace == 'HSV':
@@ -89,19 +95,15 @@ if __name__ == "__main__":
 #     notcars = notcars[0:sample_size]
     
     ### TODO: Tweak these parameters and see how the results change.
-    colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-    orient = 9
-    pix_per_cell = 8
-    cell_per_block = 2
-    hog_channel =  "ALL"# Can be 0, 1, 2, or "ALL"
+#     colorspace = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+#     orient = 9
+#     pix_per_cell = 8
+#     cell_per_block = 2
+#     hog_channel =  "ALL"# Can be 0, 1, 2, or "ALL"
     print("extracting   fetures ....")
     t=time.time()
-    car_features = extract_features(cars, cspace=colorspace, orient=orient, 
-                            pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, 
-                            hog_channel=hog_channel)
-    notcar_features = extract_features(notcars, cspace=colorspace, orient=orient, 
-                            pix_per_cell=pix_per_cell, cell_per_block=cell_per_block, 
-                            hog_channel=hog_channel)
+    car_features = extract_features(cars)
+    notcar_features = extract_features(notcars)
     t2 = time.time()
     print(round(t2-t, 2), 'Seconds to extract   features...')
     # Create an array stack of feature vectors
@@ -120,8 +122,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(
         scaled_X, y, test_size=0.2, random_state=rand_state)
     
-    print('Using:',orient,'orientations',pix_per_cell,
-        'pixels per cell and', cell_per_block,'cells per block')
+    
     print('Feature vector length:', len(X_train[0]))
     # Use a linear SVC 
     svc = LinearSVC(C=0.0001)
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     t2 = time.time()
     print(round(t2-t, 5), 'Seconds to predict', n_predict,'labels with SVC')
     
-    model_path = '../data/smvmodel.pickle'
+    model_path = './data/smvmodel.pickle'
     dump_load = DumpLoad(model_path)
     dump_load.dump((svc, X_scaler))
     print("saving model {}".format(model_path))
