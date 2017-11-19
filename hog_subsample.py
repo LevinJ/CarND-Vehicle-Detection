@@ -79,25 +79,28 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     return on_windows,on_scores
 
 
+def find_cars_with_scales():
+    ystart = 400
+    ystop = 656
+    scales = [1.2,1.5,2.0]
+#     scales = [1.5]
+    orient=9 
+    pix_per_cell=8
+    cell_per_block=2
+    hot_windows = []
+    hot_scores = []
+    for scale in scales:
+        on_windows,on_scores = find_cars(image, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block)
+        hot_windows.extend(on_windows)
+        hot_scores.extend(on_scores)
+    return hot_windows,hot_scores
 if __name__ == "__main__": 
 
     model_path = './data/smvmodel.pickle'
     dump_load = DumpLoad(model_path)
     svc, X_scaler = dump_load.load()    
-    ystart = 400
-    ystop = 656
-    scale = 1.5
-    orient=9 
-    pix_per_cell=8
-    cell_per_block=2
-    
-#     img = mpimg.imread('./data/test_images/test1.jpg')
-#         
-#     hot_windows,hot_scores = find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block)
-#     out_img = draw_boxes(img, hot_windows, color=(0, 0, 255), thick=6,scores=hot_scores)   
-#     
-#     plt.imshow(out_img)
-#     plt.show()
+   
+
     images = glob.glob('./data/hard_frames/*.jpg', recursive=True)
     images = np.random.choice(images, 5)
     
@@ -112,12 +115,7 @@ if __name__ == "__main__":
         # data from .png images (scaled 0 to 1 by mpimg) and the
         # image you are searching is a .jpg (scaled 0 to 255)
         
-        y_start_stop = [380, None] # Min and max in y to search in slide_window()
-
-        
-        
-        
-        hot_windows,hot_scores = find_cars(image, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block)                       
+        hot_windows,hot_scores =find_cars_with_scales()                      
         
         window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6,scores=hot_scores)   
         window_imgs.append(window_img)
