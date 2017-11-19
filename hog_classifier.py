@@ -32,7 +32,7 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
 # Define a function to extract features from a list of images
 # Have this function call bin_spatial() and color_hist()
 def extract_features(imgs, cspace='YCrCb', orient=9, 
-                        pix_per_cell=8, cell_per_block=2, hog_channel='ALL'):
+                        pix_per_cell=8, cell_per_block=2, hog_channel='ALL',feature_vec=True):
     # Create a list to append feature vectors to
     features = []
     # Iterate through the list of images
@@ -65,11 +65,12 @@ def extract_features(imgs, cspace='YCrCb', orient=9,
             for channel in range(feature_image.shape[2]):
                 hog_features.append(get_hog_features(feature_image[:,:,channel], 
                                     orient, pix_per_cell, cell_per_block, 
-                                    vis=False, feature_vec=True))
-            hog_features = np.ravel(hog_features)        
+                                    vis=False, feature_vec=feature_vec))
+            if feature_vec:
+                hog_features = np.ravel(hog_features)        
         else:
             hog_features = get_hog_features(feature_image[:,:,hog_channel], orient, 
-                        pix_per_cell, cell_per_block, vis=False, feature_vec=True)
+                        pix_per_cell, cell_per_block, vis=False, feature_vec=feature_vec)
         # Append the new feature vector to the features list
         features.append(hog_features)
     # Return list of feature vectors

@@ -6,13 +6,19 @@ import matplotlib.image as mpimg
 
 
 # Here is your draw_boxes function from the previous exercise
-def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
+def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6, scores=None):
     # Make a copy of the image
     imcopy = np.copy(img)
     # Iterate through the bounding boxes
+    i = 0
     for bbox in bboxes:
         # Draw a rectangle given bbox coordinates
         cv2.rectangle(imcopy, bbox[0], bbox[1], color, thick)
+        if scores is not None:
+            score_text = "{:.1f}".format(scores[i])
+            center = tuple(((np.array(bbox[0] ) + np.array(bbox[1] ))/2).astype(np.int).tolist())
+            cv2.putText(imcopy,score_text,center, cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0),2)
+            i += 1
     # Return the image copy with boxes drawn
     return imcopy
     

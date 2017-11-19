@@ -34,6 +34,7 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
 
     #1) Create an empty list to receive positive detection windows
     on_windows = []
+    on_scores = []
     #2) Iterate over all windows in the list
     for window in windows:
         #3) Extract the test window from original image
@@ -43,17 +44,18 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
         #5) Scale extracted features to be fed to classifier
         test_features = scaler.transform(np.array(features).reshape(1, -1))
         #6) Predict using your classifier
-        prediction = clf.predict(test_features)
+        score = clf.decision_function(test_features)[0]
         #7) If positive (prediction == 1) then save the window
-        if prediction == 1:
+        if score > 0:
             on_windows.append(window)
+            on_scores.append(score)
     #8) Return windows for positive detections
-    return on_windows
+    return on_windows,on_scores
 
 def get_all_windows():
     all_windows= []
-    xy_windows = [120]
-    xyo = 0.75
+    xy_windows = [76,106,136]
+    xyo = 0.5
     for xyw in xy_windows:
         windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
                                 xy_window=(xyw, xyw), xy_overlap=(xyo, xyo))
@@ -68,11 +70,12 @@ if __name__ == "__main__":
     svc, X_scaler = dump_load.load()
 
     # Check the prediction time for a single sample
+#     images = ['./data/hard_frames/frame_1206.jpg']
     
-    images = glob.glob('./data/sample/*.jpg', recursive=True)
-    images = ['./data/test_images/test1.jpg']
-#     images = glob.glob('./data/test_images/test*.jpg', recursive=True)
-#     images = np.random.choice(images, 1)
+#     images = glob.glob('./data/sample/*.jpg', recursive=True)
+#     images = ['./data/test_images/test1.jpg']
+    images = glob.glob('./data/hard_frames/*.jpg', recursive=True)
+    images = np.random.choice(images, 5)
     
     window_imgs = []
     for image in images:
@@ -85,14 +88,14 @@ if __name__ == "__main__":
         # data from .png images (scaled 0 to 1 by mpimg) and the
         # image you are searching is a .jpg (scaled 0 to 255)
         
-        y_start_stop = [None, None] # Min and max in y to search in slide_window()
+        y_start_stop = [380, None] # Min and max in y to search in slide_window()
 
         
         windows = get_all_windows()
         
-        hot_windows = search_windows(image, windows, svc, X_scaler)                       
+        hot_windows,hot_scores = search_windows(image, windows, svc, X_scaler)                       
         
-        window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)   
+        window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6,scores=hot_scores)   
         window_imgs.append(window_img)
         print("duration: {:.1f} seconds".format(tr.stop_timer()))
                          

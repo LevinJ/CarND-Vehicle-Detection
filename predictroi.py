@@ -130,7 +130,7 @@ class PredictRoi():
       
        
         img_path = './data/sample/bbox-example-image.jpg'
-        img_path = './data/test_images/test1.jpg'
+        img_path = './data/hard_frames/frame_1041.jpg'
 
         self.predict_roi(img_path)
 #         self.predict_img(img_path)
