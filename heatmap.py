@@ -5,6 +5,10 @@ import pickle
 import cv2
 from scipy.ndimage.measurements import label
 from hog_subsample import find_cars_with_scales
+from sliding_window import draw_boxes
+from stackimage import StackImage
+from mstimer import MSTimer
+import glob
 
 
 def add_heat(heatmap, bbox_list):
@@ -40,33 +44,44 @@ def draw_labeled_bboxes(img, labels):
 
 if __name__ == "__main__": 
     
+    images = glob.glob('./data/hard_frames/*.jpg', recursive=True)
+    images = np.random.choice(images, 5)
+#     images = ['./data/hard_frames/frame_622.jpg']
+    si = StackImage()
     
-
-    # Read in image similar to one shown above 
-    image = mpimg.imread('./data/test_images/test4.jpg')
-    heat = np.zeros_like(image[:,:,0]).astype(np.float)
-    
-    box_list, _ = find_cars_with_scales(image)
-
-
-    # Add heat to each box in box list
-    heat = add_heat(heat,box_list)
+    window_imgs = []
+    for image in images:
+        tr = MSTimer()
         
-    # Apply threshold to help remove false positives
-    heat = apply_threshold(heat,1)
+        image = mpimg.imread(image)
+        
+        
+        # Uncomment the following line if you extracted training
+        # data from .png images (scaled 0 to 1 by mpimg) and the
+        # image you are searching is a .jpg (scaled 0 to 255)
+        box_list, hot_scores = find_cars_with_scales(image)
+        bdboxes_img = draw_boxes(np.copy(image), box_list, color=(0, 0, 255), thick=6,scores=hot_scores)
+        
+        
+        heat_1 = np.zeros_like(image[:,:,0]).astype(np.float)  
+        heat_1 = add_heat(heat_1,box_list)
+        print("max bd = {}".format(np.max(heat_1)))
+        heat_1 = np.clip(heat_1, 0, 255).astype(np.uint8)
+        
+        heat_2 = apply_threshold(np.copy(heat_1), 1)
+        heatmap = np.clip(heat_2, 0, 255).astype(np.uint8)
+        
+        labels = label(heatmap)
+        draw_img = draw_labeled_bboxes(np.copy(image), labels)
+        
+        heat_1 = (heat_1.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
+        heatmap = (heatmap.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
+        window_img = si.stack_image_horizontal([bdboxes_img, heat_1, heatmap, draw_img])
+        window_imgs.append(window_img)
+        print("duration: {:.1f} seconds".format(tr.stop_timer()))
+                         
     
-    # Visualize the heatmap when displaying    
-    heatmap = np.clip(heat, 0, 255)
     
-    # Find final boxes from heatmap using label function
-    labels = label(heatmap)
-    draw_img = draw_labeled_bboxes(np.copy(image), labels)
-    
-    fig = plt.figure()
-    plt.subplot(121)
-    plt.imshow(draw_img)
-    plt.title('Car Positions')
-    plt.subplot(122)
-    plt.imshow(heatmap, cmap='hot')
-    plt.title('Heat Map')
-    fig.tight_layout()
+    img_show = si.stack_image_vertical(window_imgs)
+    plt.imshow(img_show)
+    plt.show()
