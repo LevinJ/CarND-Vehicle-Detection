@@ -42,12 +42,47 @@ def draw_labeled_bboxes(img, labels):
     # Return the image
     return img
 
+def get_heat_map(image):
+    tr = MSTimer()
+    
+    
+    # Uncomment the following line if you extracted training
+    # data from .png images (scaled 0 to 1 by mpimg) and the
+    # image you are searching is a .jpg (scaled 0 to 255)
+    box_list, hot_scores = find_cars_with_scales(image)
+    bdboxes_img = draw_boxes(np.copy(image), box_list, color=(0, 0, 255), thick=6,scores=hot_scores)
+    
+    
+    heat_1 = np.zeros_like(image[:,:,0]).astype(np.float)  
+   
+    heat_1 = add_heat(heat_1,box_list)
+    print("max bd = {}".format(np.max(heat_1)))
+    
+    
+    heat_1 = np.clip(heat_1, 0, 255).astype(np.uint8)
+    
+    heat_2 = apply_threshold(np.copy(heat_1), 1)
+    heatmap = np.clip(heat_2, 0, 255).astype(np.uint8)
+    
+    labels = label(heatmap)
+    draw_img = draw_labeled_bboxes(np.copy(image), labels)
+    
+    heat_1 = (heat_1.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
+    heatmap = (heatmap.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
+    
+    heat_show = si.stack_image_horizontal([heat_1, heatmap])
+    right_show = si.stack_image_vertical([bdboxes_img, heat_show])
+    window_img = si.stack_image_horizontal([draw_img,right_show])
+   
+    print("duration: {:.1f} seconds".format(tr.stop_timer()))
+    return window_img
+si = StackImage()
 if __name__ == "__main__": 
     
     images = glob.glob('./data/hard_frames/*.jpg', recursive=True)
     images = np.random.choice(images, 5)
 #     images = ['./data/hard_frames/frame_622.jpg']
-    si = StackImage()
+    
     
     window_imgs = []
     for image in images:
@@ -56,29 +91,9 @@ if __name__ == "__main__":
         image = mpimg.imread(image)
         
         
-        # Uncomment the following line if you extracted training
-        # data from .png images (scaled 0 to 1 by mpimg) and the
-        # image you are searching is a .jpg (scaled 0 to 255)
-        box_list, hot_scores = find_cars_with_scales(image)
-        bdboxes_img = draw_boxes(np.copy(image), box_list, color=(0, 0, 255), thick=6,scores=hot_scores)
-        
-        
-        heat_1 = np.zeros_like(image[:,:,0]).astype(np.float)  
-        heat_1 = add_heat(heat_1,box_list)
-        print("max bd = {}".format(np.max(heat_1)))
-        heat_1 = np.clip(heat_1, 0, 255).astype(np.uint8)
-        
-        heat_2 = apply_threshold(np.copy(heat_1), 1)
-        heatmap = np.clip(heat_2, 0, 255).astype(np.uint8)
-        
-        labels = label(heatmap)
-        draw_img = draw_labeled_bboxes(np.copy(image), labels)
-        
-        heat_1 = (heat_1.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
-        heatmap = (heatmap.astype(np.float) * 30).clip(0, 255).astype(np.uint8)
-        window_img = si.stack_image_horizontal([bdboxes_img, heat_1, heatmap, draw_img])
+        window_img = get_heat_map(image)
         window_imgs.append(window_img)
-        print("duration: {:.1f} seconds".format(tr.stop_timer()))
+        
                          
     
     
