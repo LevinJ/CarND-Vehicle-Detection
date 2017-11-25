@@ -42,7 +42,20 @@ def draw_labeled_bboxes(img, labels):
     # Return the image
     return img
 
+box_list_history = []
+
+def add_heat_history(image, box_list):
+    global box_list_history
+    box_list_history.append(box_list)
+    heat_1 = np.zeros_like(image[:,:,0]).astype(np.float)  
+    
+    HIST_FRAME_NUM = 6
+    for box_list in box_list_history[-HIST_FRAME_NUM:]:
+        heat_1 = add_heat(heat_1,box_list)
+    
+    return heat_1
 def get_heat_map(image):
+    global heat_1 
     tr = MSTimer()
     
     
@@ -52,16 +65,17 @@ def get_heat_map(image):
     box_list, hot_scores = find_cars_with_scales(image)
     bdboxes_img = draw_boxes(np.copy(image), box_list, color=(0, 0, 255), thick=6,scores=hot_scores)
     
+
     
-    heat_1 = np.zeros_like(image[:,:,0]).astype(np.float)  
-   
-    heat_1 = add_heat(heat_1,box_list)
+    heat_1 = add_heat_history(image, box_list)
+    
     print("max bd = {}".format(np.max(heat_1)))
     
     
     heat_1 = np.clip(heat_1, 0, 255).astype(np.uint8)
     
-    heat_2 = apply_threshold(np.copy(heat_1), 1)
+    HEAT_TRHES_NUM = 6*2
+    heat_2 = apply_threshold(np.copy(heat_1), HEAT_TRHES_NUM)
     heatmap = np.clip(heat_2, 0, 255).astype(np.uint8)
     
     labels = label(heatmap)
